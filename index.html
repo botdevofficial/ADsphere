@@ -199,14 +199,14 @@
         </div>
     </div>
 
-    <!-- Scripts -->
-    <script>
+<script>
         // --- View Counter Script ---
         (async function updateViewCount() {
+            // IMPORTANT: Remember to replace these placeholders with your actual jsonbin.io credentials
             const BIN_ID = 'YOUR_BIN_ID_HERE';
-            const API_KEY = 'YOUR_API_KEY_HERE'; // Replace with your jsonbin.io key
+            const API_KEY = 'YOUR_API_KEY_HERE';
 
-            if (BIN_ID === 'YOUR_BIN_ID_HERE') return; 
+            if (BIN_ID === 'YOUR_BIN_ID_HERE') return; // Don't run if not configured
 
             const API_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
             try {
@@ -234,10 +234,8 @@
         const chatForm = document.getElementById('chatForm');
         const chatInput = document.getElementById('chatInput');
         const chatMessages = document.getElementById('chatMessages');
-        const chatLoading = document.getElementById('chatLoading');
 
-        // !!! IMPORTANT !!!
-        // REPLACE this with your actual Gemini API key
+        // Your Gemini API key has been inserted here.
         const GEMINI_API_KEY = "AIzaSyAy2Zo7FKkarjp0MTe88Mo6Yj5U_uJCKws";
         
         aiChatButton.addEventListener('click', () => {
@@ -278,14 +276,23 @@
         }
         
         async function askAdsphereAI(userQuery) {
-            // --- IMPROVED API KEY CHECK ---
+            // This check is a safeguard in case the key is ever removed.
             if (!GEMINI_API_KEY || GEMINI_API_KEY === "YOUR_GEMINI_API_KEY_HERE") {
                 addMessage("AI chat is not configured. Please add a Gemini API key in the HTML source.", "ai");
                 return;
             }
-            // --- END OF IMPROVED CHECK ---
 
-            chatLoading.classList.remove('hidden');
+            // Create and add the "Typing..." indicator inside the chat window
+            const loadingBubble = document.createElement('div');
+            loadingBubble.id = 'loading-indicator';
+            loadingBubble.className = 'flex justify-start';
+            loadingBubble.innerHTML = `
+                <div class="ai-message text-white p-3 rounded-lg max-w-xs">
+                    <span class="animate-pulse">Typing...</span>
+                </div>
+            `;
+            chatMessages.appendChild(loadingBubble);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
 
             const systemInstruction = `You are "ADsphere AI", a friendly and helpful assistant for the ADsphere Telegram bot. Your goal is to answer user questions based ONLY on the following information about the bot. Be concise and direct. Do not mention that you are an AI. Do not go off-topic.
 
@@ -313,7 +320,7 @@
             
             Answer the user's question based on this information.`;
 
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_API_KEY}`;
+            const apiUrl = `https://generativelenapi.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_API_KEY}`;
             
             const payload = {
                 contents: [{ parts: [{ text: userQuery }] }],
@@ -328,21 +335,24 @@
                 });
 
                 if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error('API Error Response:', errorData);
                     throw new Error(`API error: ${response.statusText}`);
                 }
 
                 const result = await response.json();
                 const aiResponse = result.candidates[0].content.parts[0].text;
+                
+                document.getElementById('loading-indicator')?.remove();
                 addMessage(aiResponse, 'ai');
 
             } catch (error) {
                 console.error('Error calling Gemini API:', error);
-                addMessage("Sorry, I'm having trouble connecting right now. Please try again later.", 'ai');
-            } finally {
-                chatLoading.classList.add('hidden');
+                document.getElementById('loading-indicator')?.remove();
+                addMessage("Sorry, I'm having trouble connecting right now. Please check the console for details and try again later.", 'ai');
             }
         }
-    </script>
+                </script>
                 
 </body>
 </html>
